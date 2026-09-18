@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pistas Cruzadas — versión para Meet</title>
+<style>
+  :root{
+    --cream:#FBF6E9;
+    --cream-2:#F3EBD6;
+    --aqua:#5CC2C6;
+    --aqua-dark:#2F8E93;
+    --pink:#F2879F;
+    --pink-soft:#FBDCE3;
+    --wine:#8E2244;
+    --ink:#243840;
+    --ink-soft:#5B6F78;
+    --ok:#3F9E6C;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  .display{font-family:"Bookman Old Style","Bitter",Georgia,"Times New Roman",serif;font-weight:700}
+
+  /* ---------- estructura ---------- */
+  .wrap{max-width:1040px;margin:0 auto;padding:20px 18px 60px}
+  header.top{
+    background:
+      repeating-linear-gradient(-16deg, var(--aqua) 0 26px, transparent 26px 92px),
+      var(--cream-2);
+    border-bottom:3px solid var(--ink);
+  }
+  header.top .inner{max-width:1040px;margin:0 auto;padding:22px 18px}
+  h1{
+    margin:0;
+    font-size:clamp(30px,6vw,52px);
+    letter-spacing:-.5px;
+    line-height:1;
+    text-shadow:2px 2px 0 var(--cream);
+  }
+  h1 .cruz{color:var(--wine)}
+  .tagline{margin:6px 0 0;font-size:14px;color:var(--ink);background:var(--cream);display:inline-block;padding:2px 8px;border-radius:4px}
+
+  h2{font-size:22px;margin:0 0 10px}
+  h3{font-size:16px;margin:0 0 8px}
+  p{margin:0 0 12px}
+  .muted{color:var(--ink-soft);font-size:14px}
+
+  .panel{
+    background:#fff;
+    border:2px solid var(--ink);
+    border-radius:10px;
+    padding:20px;
+    margin-bottom:18px;
+    box-shadow:5px 5px 0 rgba(36,56,64,.12);
+  }
+  .panel.aqua{background:#EAF8F8;border-color:var(--aqua-dark)}
+  .panel.pink{background:var(--pink-soft);border-color:var(--pink)}
+
+  .choice{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media(max-width:700px){.choice{grid-template-columns:1fr}}
+
+  button{
+    font:inherit;
+    cursor:pointer;
+    border:2px solid var(--ink);
+    border-radius:8px;
+    background:#fff;
+    padding:10px 16px;
+    transition:transform .06s ease;
+  }
+  button:active{transform:translateY(2px)}
+  button:focus-visible{outline:3px solid var(--wine);outline-offset:2px}
+  .btn-main{background:var(--aqua);font-weight:700}
+  .btn-main:hover{background:var(--aqua-dark);color:#fff}
+  .btn-pink{background:var(--pink);font-weight:700}
+  .btn-ghost{background:transparent}
+  .btn-big{font-size:18px;padding:14px 22px;width:100%}
+  .btn-ok{background:#CFEDDC;font-weight:700;border-color:var(--ok)}
+  .btn-no{background:#FADCD9;font-weight:700;border-color:#C2453A}
+
+  input,select{
+    font:inherit;
+    border:2px solid var(--ink);
+    border-radius:8px;
+    padding:9px 12px;
+    background:#fff;
+    color:var(--ink);
+    width:100%;
+  }
+  label{display:block;font-size:13px;font-weight:600;margin:0 0 4px}
+  .field{margin-bottom:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+
+  .hidden{display:none !important}
+
+  /* ---------- barra de partida ---------- */
+  .status{
+    display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin-bottom:18px;
+  }
+  .chip{
+    border:2px solid var(--ink);border-radius:8px;background:#fff;
+    padding:8px 14px;display:flex;flex-direction:column;justify-content:center;min-width:104px;
+  }
+  .chip .k{font-size:11px;color:var(--ink-soft);font-weight:600}
+  .chip .v{font-size:22px;font-weight:700;line-height:1.1}
+  .chip.code .v{letter-spacing:2px;color:var(--wine)}
+  .chip.timer.low .v{color:#C2453A}
+
+  /* ---------- grilla ---------- */
+  .board-scroll{overflow-x:auto;padding-bottom:6px}
+  table.grid{border-collapse:separate;border-spacing:6px;margin:0 auto}
+  table.grid th,table.grid td{padding:0}
+  .head{
+    width:118px;border:2px solid var(--ink);border-radius:8px;padding:8px 6px;text-align:center;
+  }
+  .head.col{background:var(--pink-soft)}
+  .head.row{background:#EAF8F8}
+  .head .axis{font-size:26px;font-weight:700;line-height:1;font-family:"Bookman Old Style",Georgia,serif}
+  .head .word{font-size:12px;font-weight:700;letter-spacing:.3px;margin-top:3px;word-break:break-word}
+  .corner{width:118px}
+  .cell{
+    width:118px;height:74px;border:2px dashed #B9C7CD;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:700;color:#B9C7CD;background:#fff;
+  }
+  .cell.done{
+    border-style:solid;border-color:var(--ok);background:#DFF2E7;color:var(--ok);
+  }
+  @media(max-width:620px){
+    .head,.corner,.cell{width:84px}
+    .cell{height:60px}
+    .head .word{font-size:10px}
+  }
+
+  /* ---------- turno ---------- */
+  .turn{
+    border:2px solid var(--ink);border-radius:10px;background:var(--cream-2);
+    padding:18px;margin-top:18px;text-align:center;
+  }
+  .turn .cardno{font-size:15px;color:var(--ink-soft);font-weight:600}
+  .turn .who{font-size:30px;font-weight:700;margin:2px 0 4px;font-family:"Bookman Old Style",Georgia,serif}
+  .turn .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+
+  /* ---------- vista jugador ---------- */
+  .stepper{display:flex;align-items:center;gap:12px;justify-content:center}
+  .stepper input{width:110px;text-align:center;font-size:26px;font-weight:700}
+  .stepper button{width:52px;height:52px;font-size:22px;font-weight:700}
+  .reveal{
+    margin-top:18px;border:2px solid var(--ink);border-radius:12px;background:#fff;
+    padding:24px;text-align:center;
+  }
+  .coord{font-size:64px;font-weight:700;letter-spacing:4px;line-height:1;font-family:"Bookman Old Style",Georgia,serif;color:var(--wine)}
+  .words{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+  .wordchip{border:2px solid var(--ink);border-radius:8px;padding:8px 14px;font-weight:700}
+  .wordchip.r{background:#EAF8F8}
+  .wordchip.c{background:var(--pink-soft)}
+  .warn{background:var(--pink-soft);border:2px solid var(--pink);border-radius:8px;padding:10px 14px;font-size:14px;margin-bottom:16px}
+
+  /* ---------- reglas ---------- */
+  details{border-top:2px solid var(--ink);padding-top:12px;margin-top:6px}
+  summary{cursor:pointer;font-weight:700}
+  ul{margin:8px 0 0;padding-left:20px}
+  li{margin-bottom:6px}
+
+  table.score{border-collapse:collapse;width:100%;font-size:14px;margin-top:10px}
+  table.score th,table.score td{border:1px solid #C9D4D9;padding:6px 8px;text-align:center}
+  table.score th{background:var(--cream-2)}
+  table.score td.lbl{text-align:left;font-weight:700}
+  tr.me td{background:#FFF6BF}
+
+  .final{text-align:center}
+  .final .verdict{font-size:44px;font-weight:700;font-family:"Bookman Old Style",Georgia,serif;color:var(--wine);margin:6px 0}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <h1 class="display">Pistas <span class="cruz">Cruzadas</span></h1>
+    <p class="tagline">Versión para jugar en equipo por videollamada</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ============ INICIO ============ -->
+<section id="home">
+  <div class="panel">
+    <h2 class="display">¿Cómo funciona?</h2>
+    <p>Una persona abre el <strong>tablero</strong> y comparte pantalla en la reunión. El resto abre este mismo archivo en <strong>modo jugador</strong> y escribe el código de la partida. Ahí cada uno ve, en privado, la coordenada que le tocó.</p>
+    <p class="muted">Todos ven las mismas palabras y el mismo mazo porque se generan a partir del código. No hace falta servidor ni instalar nada.</p>
+  </div>
+
+  <div class="choice">
+    <div class="panel aqua">
+      <h2 class="display">Abrir el tablero</h2>
+      <p class="muted">Para quien comparte pantalla. Elegí el tamaño de la grilla y cuánto tiempo van a jugar.</p>
+      <div class="field">
+        <label for="size">Tamaño de la grilla</label>
+        <select id="size">
+          <option value="R">Rápida — 3×3 (9 cartas)</option>
+          <option value="C" selected>Clásica — 4×4 (16 cartas)</option>
+          <option value="E">Experta — 5×5 (25 cartas)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="minutes">Reloj</label>
+        <select id="minutes">
+          <option value="0">Sin reloj</option>
+          <option value="5">5 minutos</option>
+          <option value="10" selected>10 minutos</option>
+          <option value="15">15 minutos</option>
+          <option value="20">20 minutos</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="names">Quiénes juegan (separados por coma, opcional)</label>
+        <input id="names" placeholder="Joel, Juana, Oliver, Victoria…">
+      </div>
+      <button class="btn-main btn-big" onclick="createGame()">Crear partida</button>
+    </div>
+
+    <div class="panel pink">
+      <h2 class="display">Entrar como jugador</h2>
+      <p class="muted">Escribí el código que aparece en la pantalla compartida.</p>
+      <div class="field">
+        <label for="joinCode">Código de partida</label>
+        <input id="joinCode" placeholder="C-4821" autocomplete="off" style="text-transform:uppercase;font-size:22px;font-weight:700;letter-spacing:2px">
+      </div>
+      <button class="btn-pink btn-big" onclick="joinGame()">Ver mis cartas</button>
+      <p id="joinError" class="muted hidden" style="color:#C2453A;font-weight:600;margin-top:10px"></p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <details open>
+      <summary>Reglas en 30 segundos</summary>
+      <ul>
+        <li>La grilla tiene una palabra clave por fila y por columna. Todas están a la vista de todos.</li>
+        <li>A cada persona le toca una carta con una coordenada secreta, por ejemplo <strong>B3</strong>.</li>
+        <li>Da <strong>una sola palabra</strong> como pista, que cruce las dos palabras clave de esa coordenada. Si son "Doctora" y "Oso", puede decir "Veterinaria".</li>
+        <li>El resto debate y una sola persona responde por el grupo, diciendo la coordenada.</li>
+        <li>Si aciertan, la casilla se marca. Si erran, la carta se descarta y la coordenada queda en secreto.</li>
+        <li>La pista no puede compartir raíz con las palabras clave, y no se pueden repetir pistas.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<!-- ============ TABLERO ============ -->
+<section id="board" class="hidden">
+  <div class="status">
+    <div class="chip code"><span class="k">Código</span><span class="v" id="bCode">—</span></div>
+    <div class="chip"><span class="k">Grilla</span><span class="v" id="bSize">—</span></div>
+    <div class="chip"><span class="k">Aciertos</span><span class="v" id="bHits">0</span></div>
+    <div class="chip"><span class="k">Cartas usadas</span><span class="v" id="bUsed">0</span></div>
+    <div class="chip timer" id="bTimerChip"><span class="k">Reloj</span><span class="v" id="bTimer">—</span></div>
+    <button class="btn-ghost" id="bTimerBtn" onclick="toggleTimer()">Arrancar reloj</button>
+  </div>
+
+  <div class="panel">
+    <div class="board-scroll"><div id="gridHolder"></div></div>
+
+    <div class="turn" id="turnBox">
+      <div class="cardno" id="tCardNo">Carta 1 de 16</div>
+      <div class="who display" id="tWho">Le toca a Joel</div>
+      <div class="muted">Esa persona abre el modo jugador, pone el número de carta y da su pista.</div>
+      <div class="actions">
+        <button class="btn-ok" onclick="resolve(true)">Acertaron</button>
+        <button class="btn-no" onclick="resolve(false)">Erraron</button>
+        <button class="btn-ghost" onclick="endGame()">Terminar partida</button>
+      </div>
+    </div>
+
+    <div class="final hidden" id="finalBox">
+      <h2 class="display">Fin de la partida</h2>
+      <div class="muted">Ubicaron correctamente</div>
+      <div class="verdict"><span id="fHits">0</span> cartas</div>
+      <div class="display" style="font-size:26px" id="fVerdict"></div>
+      <p class="muted" id="fComment"></p>
+      <div id="scoreTable"></div>
+      <button class="btn-main" style="margin-top:16px" onclick="location.reload()">Jugar otra partida</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JUGADOR ============ -->
+<section id="player" class="hidden">
+  <div class="warn">Esta vista es privada: no la compartas en pantalla y no mires números de carta que no sean el tuyo.</div>
+
+  <div class="panel">
+    <div class="row" style="justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div class="muted">Partida</div>
+        <div class="display" style="font-size:26px;letter-spacing:2px;color:var(--wine)" id="pCode">—</div>
+      </div>
+      <div style="text-align:right">
+        <div class="muted">Grilla</div>
+        <div class="display" style="font-size:20px" id="pSize">—</div>
+      </div>
+    </div>
+
+    <h3>Tu número de carta</h3>
+    <p class="muted">El tablero compartido dice qué carta te toca. Poné ese número acá.</p>
+    <div class="stepper">
+      <button onclick="stepCard(-1)" aria-label="Carta anterior">−</button>
+      <input id="pNum" type="number" min="1" value="1" onchange="hideCard()" oninput="hideCard()">
+      <button onclick="stepCard(1)" aria-label="Carta siguiente">+</button>
+    </div>
+
+    <button class="btn-pink btn-big" style="margin-top:18px" id="pRevealBtn" onclick="revealCard()">Ver mi coordenada</button>
+
+    <div class="reveal hidden" id="pReveal">
+      <div class="muted">Tenés que hacer que adivinen</div>
+      <div class="coord" id="pCoord">B3</div>
+      <div class="words">
+        <div class="wordchip r" id="pWordR">—</div>
+        <div class="wordchip c" id="pWordC">—</div>
+      </div>
+      <p class="muted" style="margin-top:16px">Decí una sola palabra que cruce las dos. Sin usar la misma raíz, sin repetir pistas anteriores.</p>
+      <button class="btn-ghost" onclick="hideCard()">Ocultar</button>
+    </div>
+  </div>
+
+  <div class="panel aqua">
+    <h3 class="display">Las palabras de la grilla</h3>
+    <div class="board-scroll"><div id="pGridHolder"></div></div>
+  </div>
+
+  <button class="btn-ghost" onclick="location.reload()">Salir</button>
+</section>
+
+</div>
+
+<script>
+/* ================= palabras clave ================= */
+const WORDS = ["MONTAÑA","GUITARRA","OSO","NARANJA","VACACIONES","DOCTORA","ALEGRÍA","RÁPIDO","PIRATA","DESIERTO",
+"CHOCOLATE","TORMENTA","BIBLIOTECA","DINOSAURIO","ESPEJO","FUEGO","SEMÁFORO","ALMOHADA","CIRCO","VOLCÁN",
+"NIEVE","PELÍCULA","ABUELA","LLAVE","BICICLETA","TELESCOPIO","MIEL","SOMBRA","CASTILLO","ROBOT",
+"JARDÍN","PESADILLA","CUCHARA","TIGRE","PLAYA","RELOJ","MÚSICA","CARTERO","GLOBO","HOSPITAL",
+"SUBTE","MARIPOSA","PIMIENTA","GIGANTE","CUEVA","PARAGUAS","CONCIERTO","DETECTIVE","MANTECA","ISLA",
+"TREN","FANTASMA","BOMBERO","ALFOMBRA","TORTUGA","LUNA","CIRUJANO","PANADERÍA","ELEFANTE","VENTANA",
+"SILENCIO","COHETE","PINGÜINO","CAFÉ","MARATÓN","BRUJA","ESCALERA","SANDÍA","INVIERNO","TEATRO",
+"LOBO","CADENA","PUENTE","ZAPATILLA","GRANJA","MOTOR","SOPA","VAMPIRO","CARNAVAL","ARAÑA",
+"DIAMANTE","MUSEO","CAMIÓN","NUBE","SERPIENTE","PIZARRÓN","ORQUESTA","CANGURO","HELADO","TORNILLO",
+"SELVA","ASCENSOR","PESCADOR","BOTELLA","CUMPLEAÑOS","MURCIÉLAGO","ESPADA","HORNO","LABERINTO","PAYASO",
+"ANTENA","CEBRA","CATARATA","MONEDA","VIOLÍN","ALMACÉN","DRAGÓN","PLANETA","CARAMELO","BUZO",
+"TERREMOTO","ESTATUA","PERFUME","CANGREJO","FÚTBOL","LADRÓN","VELA","MOLINO","SUBMARINO","GALLETITA",
+"TIJERA","MAPA","BARBA","HAMACA","PIRÁMIDE","CUERDA","LECHUZA","NOVELA","SEMILLA","TORRE",
+"VIAJE","ZORRO","ABEJA","ANCLA","BALLENA","CAMPANA","DIENTE","FAROL","GRANIZO","HUELLA",
+"IMÁN","JIRAFA","KIOSCO","LÁMPARA","MÁSCARA","NIDO","OLA","PUERTA","QUESO","RANA",
+"SUEÑO","TRUENO","UNIFORME","VECINO","ZANAHORIA","BOSQUE","CACTUS","DESFILE","ESPUMA","FIESTA",
+"GUANTE","HÉROE","INVENTO","LIBRO","MOTO","CHISTE","ESQUÍ","MEDIALUNA","ASADO","MATE"];
+
+const SIZES = {R:{n:3,label:"Rápida 3×3"}, C:{n:4,label:"Clásica 4×4"}, E:{n:5,label:"Experta 5×5"}};
+const SCORE = {
+  R:[["Fiasco","menos de 4"],["Regular","4 a 5"],["Bien","6 a 7"],["Increíble","8 o más"]],
+  C:[["Fiasco","menos de 8"],["Regular","8 a 11"],["Bien","12 a 14"],["Increíble","15 o más"]],
+  E:[["Fiasco","menos de 12"],["Regular","12 a 16"],["Bien","17 a 22"],["Increíble","23 o más"]]
+};
+const CUTS = {R:[4,6,8], C:[8,12,15], E:[12,17,23]};
+const COMMENTS = [
+  "Claramente todavía no se entienden entre ustedes.",
+  "Hay un entendimiento básico de cómo piensan los demás.",
+  "¡Vaaamos! Tienen una conexión fuerte.",
+  "¡Puntuación perfecta! Sospechamos que usaron telepatía."
+];
+
+/* ================= azar determinístico ================= */
+function hashCode(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffled(arr,rng){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function buildGame(code){
+  const raw = (code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(!/^[RCE]\d{3,6}$/.test(raw)) return null;
+  const letter = raw[0];
+  const key = letter + "-" + raw.slice(1);
+  const n = SIZES[letter].n;
+  const rng = mulberry32(hashCode(key));
+  const pool = shuffled(WORDS, rng);
+  const rowWords = pool.slice(0,n);
+  const colWords = pool.slice(n,2*n);
+  const coords = [];
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++) coords.push(String.fromCharCode(65+r)+(c+1));
+  const deck = shuffled(coords, rng);
+  return {code:key, letter, n, rowWords, colWords, deck};
+}
+
+/* ================= estado ================= */
+let G=null, players=[], idx=0, hits=0, solved={}, totalSeconds=0, remaining=0, ticking=false, tick=null;
+
+function show(id){["home","board","player"].forEach(s=>document.getElementById(s).classList.toggle("hidden", s!==id));}
+
+/* ================= tablero ================= */
+function createGame(){
+  const letter = document.getElementById("size").value;
+  const code = letter + "-" + String(Math.floor(1000+Math.random()*9000));
+  G = buildGame(code);
+  const raw = document.getElementById("names").value.trim();
+  players = raw ? raw.split(",").map(s=>s.trim()).filter(Boolean) : [];
+  totalSeconds = parseInt(document.getElementById("minutes").value,10)*60;
+  remaining = totalSeconds;
+  idx=0; hits=0; solved={};
+  document.getElementById("bCode").textContent = G.code;
+  document.getElementById("bSize").textContent = SIZES[G.letter].label.split(" ")[1];
+  document.getElementById("bTimer").textContent = totalSeconds ? fmt(remaining) : "—";
+  document.getElementById("bTimerBtn").classList.toggle("hidden", !totalSeconds);
+  document.getElementById("gridHolder").innerHTML = gridHTML(G, solved);
+  renderTurn();
+  show("board");
+}
+
+function gridHTML(g, done){
+  let h = '<table class="grid"><tr><th class="corner"></th>';
+  for(let c=0;c<g.n;c++) h += '<th class="head col"><div class="axis">'+(c+1)+'</div><div class="word">'+g.colWords[c]+'</div></th>';
+  h += '</tr>';
+  for(let r=0;r<g.n;r++){
+    h += '<tr><th class="head row"><div class="axis">'+String.fromCharCode(65+r)+'</div><div class="word">'+g.rowWords[r]+'</div></th>';
+    for(let c=0;c<g.n;c++){
+      const id = String.fromCharCode(65+r)+(c+1);
+      const ok = done && done[id];
+      h += '<td><div class="cell'+(ok?' done':'')+'">'+(ok?id:'')+'</div></td>';
+    }
+    h += '</tr>';
+  }
+  return h+'</table>';
+}
+
+function renderTurn(){
+  document.getElementById("tCardNo").textContent = "Carta "+(idx+1)+" de "+G.deck.length;
+  const who = players.length ? players[idx % players.length] : "quien siga en la ronda";
+  document.getElementById("tWho").textContent = players.length ? ("Le toca a "+who) : "Le toca a quien siga";
+  document.getElementById("bHits").textContent = hits;
+  document.getElementById("bUsed").textContent = idx;
+}
+
+function resolve(ok){
+  const coord = G.deck[idx];
+  if(ok){ solved[coord]=true; hits++; }
+  idx++;
+  document.getElementById("gridHolder").innerHTML = gridHTML(G, solved);
+  if(idx >= G.deck.length){ endGame(); return; }
+  renderTurn();
+}
+
+function endGame(){
+  stopTimer();
+  document.getElementById("turnBox").classList.add("hidden");
+  document.getElementById("finalBox").classList.remove("hidden");
+  document.getElementById("gridHolder").innerHTML = gridHTML(G, solved);
+  document.getElementById("bHits").textContent = hits;
+  document.getElementById("bUsed").textContent = idx;
+  document.getElementById("fHits").textContent = hits;
+  const cuts = CUTS[G.letter];
+  let lvl = 0;
+  if(hits >= cuts[2]) lvl = 3; else if(hits >= cuts[1]) lvl = 2; else if(hits >= cuts[0]) lvl = 1;
+  document.getElementById("fVerdict").textContent = SCORE[G.letter][lvl][0];
+  document.getElementById("fComment").textContent = COMMENTS[lvl];
+  let t = '<table class="score"><tr><th>Resultado</th><th>Aciertos</th></tr>';
+  SCORE[G.letter].forEach((row,i)=>{ t += '<tr class="'+(i===lvl?'me':'')+'"><td class="lbl">'+row[0]+'</td><td>'+row[1]+'</td></tr>'; });
+  document.getElementById("scoreTable").innerHTML = t+'</table>';
+}
+
+/* ================= reloj ================= */
+function fmt(s){const m=Math.floor(s/60),x=s%60;return m+":"+String(x).padStart(2,"0");}
+function toggleTimer(){ ticking ? stopTimer() : startTimer(); }
+function startTimer(){
+  if(!totalSeconds) return;
+  ticking = true;
+  document.getElementById("bTimerBtn").textContent = "Pausar reloj";
+  tick = setInterval(()=>{
+    remaining--;
+    document.getElementById("bTimer").textContent = fmt(Math.max(0,remaining));
+    document.getElementById("bTimerChip").classList.toggle("low", remaining<=60);
+    if(remaining<=0){ stopTimer(); endGame(); }
+  },1000);
+}
+function stopTimer(){ ticking=false; clearInterval(tick); const b=document.getElementById("bTimerBtn"); if(b) b.textContent="Arrancar reloj"; }
+
+/* ================= jugador ================= */
+function joinGame(){
+  const code = document.getElementById("joinCode").value;
+  const g = buildGame(code);
+  const err = document.getElementById("joinError");
+  if(!g){ err.textContent = "Ese código no existe. Copiá el que aparece en la pantalla compartida, con la letra incluida."; err.classList.remove("hidden"); return; }
+  err.classList.add("hidden");
+  G = g;
+  document.getElementById("pCode").textContent = G.code;
+  document.getElementById("pSize").textContent = SIZES[G.letter].label;
+  document.getElementById("pNum").max = G.deck.length;
+  document.getElementById("pGridHolder").innerHTML = gridHTML(G, null);
+  hideCard();
+  show("player");
+}
+function stepCard(d){
+  const el = document.getElementById("pNum");
+  let v = parseInt(el.value||"1",10)+d;
+  v = Math.min(Math.max(v,1), G.deck.length);
+  el.value = v; hideCard();
+}
+function hideCard(){
+  document.getElementById("pReveal").classList.add("hidden");
+  document.getElementById("pRevealBtn").classList.remove("hidden");
+}
+function revealCard(){
+  let v = parseInt(document.getElementById("pNum").value||"1",10);
+  v = Math.min(Math.max(v,1), G.deck.length);
+  document.getElementById("pNum").value = v;
+  const coord = G.deck[v-1];
+  const r = coord.charCodeAt(0)-65, c = parseInt(coord.slice(1),10)-1;
+  document.getElementById("pCoord").textContent = coord;
+  document.getElementById("pWordR").textContent = String.fromCharCode(65+r)+" · "+G.rowWords[r];
+  document.getElementById("pWordC").textContent = (c+1)+" · "+G.colWords[c];
+  document.getElementById("pReveal").classList.remove("hidden");
+  document.getElementById("pRevealBtn").classList.add("hidden");
+}
+
+document.getElementById("joinCode").addEventListener("keydown", e=>{ if(e.key==="Enter") joinGame(); });
+</script>
+</body>
+</html>
